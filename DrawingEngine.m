@@ -21,30 +21,90 @@ I = imresize(I, 0.33);
 
 %  Displays info about the image and the image itself
 %whos J
-figure, imshow(I);
+%figure, imshow(I);
 
 %  the image must be converted to greyscale
 gray = rgb2gray(I);
-figure, imshow(gray);
+%figure, imshow(gray);
 
 %  Run Canny Edge detection to find the outlines
 edge_method = 'Canny';
 %threshold = 0.05;
-I = edge(gray, edge_method);
-figure, imshow(I);
+can = edge(gray, edge_method);
+%figure, imshow(can);
 
-%% Line Finding
+%% Path Making Finding
 %  form a collection
 collection = [];
+eightConnect = [-1 -1; -1 0; -1 1; 0 -1; 1 -1; 1 0; 1 1; 0 1];
+hasNeighbors = false;
+frontiers = [];
+
+can = [1 0 0; 0 1 0; 0 0 1];
+[row,col] = size(can);
 
 %  Iterate through each cell
-for r = 1:len(I)
-    for c = 1:len(r)
-        pixel = I(r,c);
-        if pixel == 1
+%  Go Through each row
+for r = 1:row
+    %  Go through each element
+    for c = 1:col
+        %  Get the current pixel
+        pixel = can(row, col);
+        %  If its an edge
+        if pixel
+            %  Begin to form a chain of pixels
             curve = [];
-            curve.append([r,c]);
-            
+            %  Innittially assume it has no neighbors
+            hasNeighbors = false;
+            %  Check if it has any neighbors
+            for m = 1:length(eightConnect)
+                %disp("checking for neighbors");
+                %  If the next pixel is an edge
+                x = row + eightConnect(m, 1);
+                y = col + eightConnect(m, 2);
+                if (x > 0) && (y > 0) && (x <= row) && (y <= col)
+                    disp("is valid neighbor");
+                    % If a neighbor is an edge
+                    if can(x, y)
+                        hasNeighbors = true;
+                    end
+                end
+            end
+            %  if its not just noise, add it, and begin chaining
+            if hasNeighbors
+                %  Add the current pixel as the first in the chain
+                curve.append([row col]);
+                can([r c]) = 0;
+            end
+            while hasNeighbors
+                for m = 1:length(eightConnect)
+                    %  If the next pixel is an edge
+                    if can([r c] + m) == true
+                        %instead add to frontiers
+                        frontiers.append([r c] + m);
+                        %we now know it has a neighbor
+                        hasNeighbors = true;
+                    end
+                end 
+                %add most optimal frontier, the one in the middle
+                middleNode = frontiers(length(frontiers) / 2);
+                %clear the pixel on the image
+                can([middleNode(0) middleNode(1)]) = 0;
+                %clear the frontiers
+                frontiers = [];
+                curve.append(middleNode);
+                %set next search point
+                pixel = middleNode;
+            end
+            %add the curve that was just generated provided its not empty
+            if size(curve) > 0
+                collection.append(curve);
+                disp('hit');
+            end
+        else
+            disp('miss')
         end
     end
 end
+
+disp(can);
