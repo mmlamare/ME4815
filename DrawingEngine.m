@@ -8,6 +8,7 @@
 
 clc
 close all
+clear variables
 
 %  A personal photo of Moscow City from September 2016 is locally stored in
 %  the file directory. The image is loaded in as a test file. It is a jpg
@@ -21,26 +22,28 @@ I = imresize(I, 0.33);
 
 %  Displays info about the image and the image itself
 %whos J
-%figure, imshow(I);
+figure, imshow(I);
 
 %  the image must be converted to greyscale
 gray = rgb2gray(I);
-%figure, imshow(gray);
+figure, imshow(gray);
 
 %  Run Canny Edge detection to find the outlines
 edge_method = 'Canny';
 %threshold = 0.05;
 can = edge(gray, edge_method);
-%figure, imshow(can);
+figure, imshow(can);
 
 %% Path Making Finding
 %  form a collection
 collection = {};
-eightConnect = [-1 -1; -1 0; -1 1; 0 -1; 1 -1; 1 0; 1 1; 0 1];
+eightConnect = [0 1; 1 1; 1 0; 1 -1; 0 -1; -1 -1; -1 0; -1 1];
 hasNeighbors = false;
+isDone = false;
 frontier = {};
+repeat = {};
 
-can = [1 0 0; 0 1 0; 0 0 1;0 1 0]
+%can = [0 0 0 0 0 0 0 0; 0 0 1 1 0 1 1 0; 0 0 0 0 1 0 1 0;1 1 1 1 0 0 1 1;1 0 1 0 1 0 1 1;1 1 0 0 0 1 0 1;1 0 1 1 0 1 1 1;0 0 1 1 0 0 0 0]
 [row,col] = size(can);
 
 %  Begin to form a chain of pixels
@@ -48,59 +51,142 @@ curve = {};
 %  Initialize count of curves
 curveCount = 0;
 
-%  Iterate through each cell
-%  Go Through each row
-for r_m = 1:row
-    %  Go through each element
-    for c_m = 1:col
-        %  Get the current pixel
-        r_s = r_m
-        c_s = c_m
-        pixel = can(r_s,c_s)
-        %  If its an edge
-        while pixel
-            %  Initially assume it has no neighbors
-            hasNeighbors = false;
-            %  Check if it has any neighbors
-            for m = 1:length(eightConnect)
-                %disp("checking for neighbors");
-                %  If the next pixel is an edge
-                x = r_s + eightConnect(m, 1);
-                y = c_s + eightConnect(m, 2);
-                if (x > 0) && (y > 0) && (x <= row) && (y <= col)
-                    %disp("is valid neighbor");
-                    % If a neighbor is an edge
-                    if can(x, y)
-                        frontier{end+1} = [x,y];
-                        hasNeighbors = true;
+while ~isDone
+    
+    %  Iterate through each cell
+    %  Go Through each row
+    for r_m = 1:row
+        %  Go through each element
+        for c_m = 1:col
+            %  Get the current pixel
+            r_s = r_m;
+            c_s = c_m;
+            pixel = can(r_s,c_s);
+            %  If its an edge
+            while pixel
+                %  Initially assume it has no neighbors
+                hasNeighbors = false;
+                %  Check if it has any neighbors
+                for m = 1:length(eightConnect)
+                    %  If the next pixel is an edge
+                    x = r_s + eightConnect(m, 1);
+                    y = c_s + eightConnect(m, 2);
+                    % check for validity of neighbors
+                    if (x > 0) && (y > 0) && (x <= row) && (y <= col)
+                        % If a neighbor is valid and an edge
+                        if can(x, y)
+                            % add to frontier
+                            frontier{end+1} = [x,y];
+                            % set flag to true
+                            hasNeighbors = true;
+                        end
                     end
                 end
+                if hasNeighbors
+                    %  Add the current pixel as the first in the chain
+                    curve{end+1}=[r_s c_s];
+                    
+                    %  If conected to more than one pixel, store info to avoid
+                    %  loss of lines
+                    if(length(frontier) > 1)
+                        %has more than one connection so add to list and clear
+                        %to avoid loops
+                        repeat{end+1}=[r_s c_s];
+                        can(r_s, c_s) = 0;
+                    else
+                        %  otherwise clear current pixel to avoid loops
+                        can(r_s, c_s) = 0;
+                    end
+                    
+                    %  add first found frontier (theortically heading away
+                    %  from starting position)
+                    [front_r,front_c] = ind2sub(size(frontier),1);
+                    canPos = frontier{front_r,front_c};
+                    r_s = canPos(1);
+                    c_s = canPos(2);
+                    
+                    % clear frontier for next loop
+                    frontier = {};
+                    % set next search point
+                    pixel = can(r_s,c_s);
+                else
+                    %  Add the current pixel as the first in the chain
+                    curve{end+1}=[r_s c_s];
+                    
+                    %  clear current pixel to avoid loops
+                    can(r_s, c_s) = 0;
+                    
+                    % set next search point (goes back to orig)
+                    pixel = can(r_m,c_m);
+                end
             end
-            if hasNeighbors
-                %  Add the current pixel as the first in the chain
-                curve{end+1}=[r_s c_s];
-                %  clear current pixel to avoid loops
-                can(r_s, c_s) = 0;
+            %  add the curve that was just generated provided its not empty
+            if length(curve) > 5
+                curveCount = curveCount + 1;
+                collection{curveCount,1} = curve;
                 
-                %  add most optimal frontier, the one in the middle
-                middleNode = round(length(frontier)/2);
-                [front_r,front_c] = ind2sub(size(frontier),middleNode);
-                canPos = frontier{front_r,front_c};
-                r_s = canPos(1);
-                c_s = canPos(2);
-                r_s
-                c_s
-                %set next search point
-                pixel = can(r_s,c_s);
+                %  reset curve
+                curve = {};
+                
+                % repopulate repeated nodes if necessary
+                if (size(repeat,1) > 0) || (size(repeat,2) > 0)
+                    for z = 1:sub2ind(size(repeat),size(repeat,1),size(repeat,2))
+                        [rp_irow,rp_icol] = ind2sub(size(repeat),z);
+                        rp_val = repeat{rp_irow,rp_icol};
+                        can(rp_val(1,1),rp_val(1,2)) = 1;
+                    end
+                    repeat = {};
+                end
+            else
+                %  reset curve array
+                curve = {};
+                %  reset repeated array
+                repeat = {};
             end
-        end
-        %  add the curve that was just generated provided its not empty
-        if size(curve) > 0
-            curveCount = curveCount + 1;
-            collection{curveCount,1} = curve;
-            disp(curve);
-            %  reset curve
-            curve = {};
         end
     end
+    % assume that picture is empty of edges
+    isEmpty = true;
+    %  Iterate through each cell
+    %  Go Through each row
+    for r_m = 1:row
+        %  Go through each element
+        for c_m = 1:col
+            if can(r_m,c_m)
+                % found an edge cell
+                isEmpty = false;
+            end
+        end
+    end
+    if isEmpty
+        isDone = true;
+        disp("Sketch Composition Complete")
+    end
+end
+% plot collection to see simulated sketch
+if (size(collection,1) > 0) || (size(collection,2) > 0)
+    figure;
+    hold on;
+    for z = 1:sub2ind(size(collection),size(collection,1),size(collection,2))
+        % clear structure to hold path
+        clctn_path = {};
+        point = [];
+        % pull path from collection
+        [clctn_irow,clctn_icol] = ind2sub(size(collection),z);
+        % store path from collection
+        clctn_path = collection{clctn_irow,clctn_icol};
+        % need to modify the format of the data so that Matlab can plot it
+        for y = 1:sub2ind(size(clctn_path),size(clctn_path,1),size(clctn_path,2))
+            % pull point from path
+            [clctn_p_row,clctn_p_col] = ind2sub(size(clctn_path),y);
+            temp = clctn_path{clctn_p_row,clctn_p_col};
+            % store point in n x  matrix
+            point(y,1) = temp(1,1);
+            point(y,2) = temp(1,2);
+        end
+        % plot simulated sketch
+        plot(point(:,1),point(:,2));
+    end
+    hold off;
+    disp("Simulated Plot Complete");
 end
