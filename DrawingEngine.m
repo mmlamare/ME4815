@@ -190,3 +190,31 @@ if (size(collection,1) > 0) || (size(collection,2) > 0)
     hold off;
     disp("Simulated Plot Complete");
 end
+
+%% Generate Rapid Code
+
+% Begin text file generation with necessary meta data
+% Print Module
+fprintf("MODULE Module1");
+
+% Print Targets
+% For each curve, 
+    % move linear to just above the first point
+    % move down to first point
+    % For each other point in the curve
+        % move linear to that
+    % when at last point in curve lift up linear
+
+ % Print Main
+ fprintf("PROC main()");
+ % itterate through the list of paths
+ fprintf("ENDPROC");
+ 
+ % Print Paths
+ % itterate through each path
+    % within each path, itterate through each target
+    % figure amount of local curve and map to z value
+    % print moveL command
+ 
+ % Print ENDMODULE
+ fprintf("ENDMODULE");
