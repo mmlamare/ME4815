@@ -193,28 +193,57 @@ end
 
 %% Generate Rapid Code
 
+% Set a constant for the height to draw on
+HEIGHT = 2; 
+
 % Begin text file generation with necessary meta data
 % Print Module
 fprintf("MODULE Module1");
 
 % Print Targets
-% For each curve, 
-    % move linear to just above the first point
-    % move down to first point
-    % For each other point in the curve
-        % move linear to that
-    % when at last point in curve lift up linear
+% For each curve,
+% move linear to just above the first point
+% move down to first point
+% For each other point in the curve
+% move linear to that
+% when at last point in curve lift up linear
+for prow = 1:length(collection)
+    tPath = collection{prow};
+    for targ = 1:length(tPath)
+        ID = "Target_" + int2string(targ) + "0";
+        %disp("tPath{targ} " + tPath{targ});
+        [xCoord, yCoord] = tPath{targ};
+        zCoord = HEIGHT;
+        fprintf(makeTargetCode(ID, xCoord, yCoord, zCoord));
+    end
+end
 
- % Print Main
- fprintf("PROC main()");
- % itterate through the list of paths
- fprintf("ENDPROC");
- 
- % Print Paths
- % itterate through each path
-    % within each path, itterate through each target
-    % figure amount of local curve and map to z value
-    % print moveL command
- 
- % Print ENDMODULE
- fprintf("ENDMODULE");
+% Print Main
+fprintf("PROC main()");
+% itterate through the list of paths
+for prow = 1:length(collection)
+    fprintf("    Path_" + int2string(prow) + "0;");
+end
+fprintf("ENDPROC");
+
+% Print Paths
+% itterate through each path
+% within each path, itterate through each target
+% figure amount of local curve and map to z value
+% print moveL command
+for prow = 1:length(collection)
+    tPath = collection{prow};
+    fprintf("PROC Path" + int2string(prow) + "0()");
+    for targ = 1:length(tPath)
+        TargetID = "Target_" + int2string(targ) + "0";
+        %disp("tPath{targ} " + tPath{targ});
+        vel = "v1000";
+        z = "z10";
+        tool = "MyTool";
+        workobj = "Workobject_1";
+        makeMoveL(TargetID, vel, z, tool, workobj) 
+    end
+end
+
+% Print ENDMODULE
+fprintf("ENDMODULE");
