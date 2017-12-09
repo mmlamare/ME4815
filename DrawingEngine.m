@@ -196,6 +196,12 @@ end
 % Set a constant for the height to draw on
 HEIGHT = 2; 
 
+% Set a scale for pixels per inch
+% Needs to be mapped
+PPI = 20;
+xOffset = 20;
+yOffset = 1;
+
 % Begin text file generation with necessary meta data
 % Print Module
 fprintf("MODULE Module1");
@@ -210,10 +216,12 @@ fprintf("MODULE Module1");
 for prow = 1:length(collection)
     tPath = collection{prow};
     for targ = 1:length(tPath)
-        ID = "Target_" + int2string(targ) + "0";
-        %disp("tPath{targ} " + tPath{targ});
-        [xCoord, yCoord] = tPath{targ};
+        [xCoord, yCoord] = coord;
+        % Map the coordinates
+        xCoord = pixelToPosition(xCoord, PPI, xOffset);
+        yCoord = pixelToPosition(yCoord, PPI, yOffset);
         zCoord = HEIGHT;
+        ID = "Target_" + int2str(targ) + "0";
         fprintf(makeTargetCode(ID, xCoord, yCoord, zCoord));
     end
 end
@@ -222,7 +230,7 @@ end
 fprintf("PROC main()");
 % itterate through the list of paths
 for prow = 1:length(collection)
-    fprintf("    Path_" + int2string(prow) + "0;");
+    fprintf("    Path_" + int2str(prow) + "0;");
 end
 fprintf("ENDPROC");
 
@@ -233,9 +241,9 @@ fprintf("ENDPROC");
 % print moveL command
 for prow = 1:length(collection)
     tPath = collection{prow};
-    fprintf("PROC Path" + int2string(prow) + "0()");
+    fprintf("PROC Path" + int2str(prow) + "0()");
     for targ = 1:length(tPath)
-        TargetID = "Target_" + int2string(targ) + "0";
+        TargetID = "Target_" + int2str(targ) + "0";
         %disp("tPath{targ} " + tPath{targ});
         vel = "v1000";
         z = "z10";
