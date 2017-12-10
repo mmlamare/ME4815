@@ -202,9 +202,15 @@ PPI = 20;
 xOffset = 20;
 yOffset = 1;
 
+% Create a File ID
+% 'a' character is used to ensure it appends
+% 'w' ensure existing contents are discarded
+fID = fopen('RapidCommand.txt', 'a');
+fBeginID = fopen('RapidCommand.txt', 'w');
+
 % Begin text file generation with necessary meta data
 % Print Module
-fprintf("MODULE Module1");
+fprintf(fBeginID, "MODULE Module1\r\n");
 
 % Print Targets
 % For each curve,
@@ -222,17 +228,17 @@ for prow = 1:length(collection)
         yCoord = pixelToPosition(yCoord, PPI, yOffset);
         zCoord = HEIGHT;
         ID = "Target_" + int2str(targ) + "0";
-        fprintf(makeTargetCode(ID, xCoord, yCoord, zCoord));
+        fprintf(fID, makeTargetCode(ID, xCoord, yCoord, zCoord));
     end
 end
 
 % Print Main
-fprintf("PROC main()");
+fprintf(fID, "PROC main()\r\n");
 % itterate through the list of paths
 for prow = 1:length(collection)
-    fprintf("    Path_" + int2str(prow) + "0;");
+    fprintf(fID, "    Path_" + int2str(prow) + "0;\r\n");
 end
-fprintf("ENDPROC");
+fprintf(fID, "ENDPROC\r\n");
 
 % Print Paths
 % itterate through each path
@@ -241,7 +247,7 @@ fprintf("ENDPROC");
 % print moveL command
 for prow = 1:length(collection)
     tPath = collection{prow};
-    fprintf("PROC Path" + int2str(prow) + "0()");
+    fprintf(fID, "PROC Path" + int2str(prow) + "0()\r\n");
     for targ = 1:length(tPath)
         TargetID = "Target_" + int2str(targ) + "0";
         %disp("tPath{targ} " + tPath{targ});
@@ -254,4 +260,7 @@ for prow = 1:length(collection)
 end
 
 % Print ENDMODULE
-fprintf("ENDMODULE");
+fprintf(fID, "ENDMODULE\r\n");
+
+% Close the file now that we are done
+fclose(fID);
