@@ -222,7 +222,7 @@ fprintf(fBeginID, "MODULE Module1\r\n");
 for prow = 1:length(collection)
     tPath = collection{prow};
     for targ = 1:length(tPath)
-        [xCoord, yCoord] = coord;
+        [xCoord, yCoord] = tPath{targ};
         % Map the coordinates
         xCoord = pixelToPosition(xCoord, PPI, xOffset);
         yCoord = pixelToPosition(yCoord, PPI, yOffset);
