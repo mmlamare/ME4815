@@ -13,7 +13,7 @@ clear variables
 %  A personal photo of Moscow City from September 2016 is locally stored in
 %  the file directory. The image is loaded in as a test file. It is a jpg
 %  but its 2017 to hopefully that won't matter.
-I = imread('PTDC0073.jpg');
+I = imread('Photos/PTDC0073.jpg');
 
 %  The 12 Megapixel native size from the camera is just too big for MATLAB.
 %  It actually does the resizing automatically and throws a warning, but
@@ -22,17 +22,17 @@ I = imresize(I, 0.33);
 
 %  Displays info about the image and the image itself
 %whos J
-figure, imshow(I);
+%figure, imshow(I);
 
 %  the image must be converted to greyscale
 gray = rgb2gray(I);
-figure, imshow(gray);
+%figure, imshow(gray);
 
 %  Run Canny Edge detection to find the outlines
 edge_method = 'Canny';
 %threshold = 0.05;
 can = edge(gray, edge_method);
-figure, imshow(can);
+%figure, imshow(can);
 
 %% Path Making Finding
 %  form a collection
@@ -194,7 +194,7 @@ end
 %% Generate Rapid Code
 
 % Set a constant for the height to draw on
-HEIGHT = 2; 
+HEIGHT = 2;
 
 % Set a scale for pixels per inch
 % Needs to be mapped
@@ -211,6 +211,7 @@ fBeginID = fopen('RapidCommand.txt', 'w');
 % Begin text file generation with necessary meta data
 % Print Module
 fprintf(fBeginID, "MODULE Module1\r\n");
+fprintf(fID, "\r\n");
 
 % Print Targets
 % For each curve,
@@ -219,20 +220,25 @@ fprintf(fBeginID, "MODULE Module1\r\n");
 % For each other point in the curve
 % move linear to that
 % when at last point in curve lift up linear
+targCount = 1;
 for prow = 1:length(collection)
     tPath = collection{prow};
     for targ = 1:length(tPath)
-        [xCoord, yCoord] = tPath{targ};
+        Chords = tPath{targ};
+        xCoord = Chords(1);
+        yCoord = Chords(2);
         % Map the coordinates
         xCoord = pixelToPosition(xCoord, PPI, xOffset);
         yCoord = pixelToPosition(yCoord, PPI, yOffset);
         zCoord = HEIGHT;
-        ID = "Target_" + int2str(targ) + "0";
+        ID = int2str(targCount) + "0";
         fprintf(fID, makeTargetCode(ID, xCoord, yCoord, zCoord));
+        targCount = targCount + 1;
     end
 end
 
 % Print Main
+fprintf(fID, "\r\n");
 fprintf(fID, "PROC main()\r\n");
 % itterate through the list of paths
 for prow = 1:length(collection)
@@ -245,18 +251,21 @@ fprintf(fID, "ENDPROC\r\n");
 % within each path, itterate through each target
 % figure amount of local curve and map to z value
 % print moveL command
+fprintf(fID, "\r\n");
+pTargCount = 1;
 for prow = 1:length(collection)
     tPath = collection{prow};
     fprintf(fID, "PROC Path" + int2str(prow) + "0()\r\n");
-    for targ = 1:length(tPath)
-        TargetID = "Target_" + int2str(targ) + "0";
-        %disp("tPath{targ} " + tPath{targ});
+    for pTarg = 1:length(tPath)
+        TargetID = int2str(pTargCount) + "0";
         vel = "v1000";
         z = "z10";
         tool = "MyTool";
         workobj = "Workobject_1";
-        makeMoveL(TargetID, vel, z, tool, workobj) 
+        fprintf(fID, makeMoveL(TargetID, vel, z, tool, workobj));
+        pTargCount = pTargCount + 1;
     end
+    fprintf(fID, "\r\n");
 end
 
 % Print ENDMODULE
@@ -264,3 +273,5 @@ fprintf(fID, "ENDMODULE\r\n");
 
 % Close the file now that we are done
 fclose(fID);
+
+disp("RAPID Code Generation Complete");
