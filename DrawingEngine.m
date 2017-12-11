@@ -32,7 +32,7 @@ gray = rgb2gray(I);
 edge_method = 'Canny';
 %threshold = 0.05;
 can = edge(gray, edge_method);
-%figure, imshow(can);
+figure, imshow(can);
 
 %% Path Making Finding
 %  form a collection
@@ -43,6 +43,10 @@ isDone = false;
 frontier = {};
 repeat = {};
 
+% set the values that determine which paths and points to keep
+minLength = 8;
+storePointCount = 2;
+
 %can = [0 0 0 0 0 0 0 0; 0 0 1 1 0 1 1 0; 0 0 0 0 1 0 1 0;1 1 1 1 0 0 1 1;1 0 1 0 1 0 1 1;1 1 0 0 0 1 0 1;1 0 1 1 0 1 1 1;0 0 1 1 0 0 0 0]
 [row,col] = size(can);
 
@@ -50,6 +54,8 @@ repeat = {};
 curve = {};
 %  Initialize count of curves
 curveCount = 0;
+%  Initialize count of points
+pointCount = 0;
 
 while ~isDone
     
@@ -73,7 +79,8 @@ while ~isDone
                     y = c_s + eightConnect(m, 2);
                     % check for validity of neighbors
                     if (x > 0) && (y > 0) && (x <= row) && (y <= col)
-                        % If a neighbor is valid and an edge
+                        % If a neighbor is valid and an edge and store only
+                        % every other point
                         if can(x, y)
                             % add to frontier
                             frontier{end+1} = [x,y];
@@ -82,10 +89,14 @@ while ~isDone
                         end
                     end
                 end
-                if hasNeighbors
-                    %  Add the current pixel as the first in the chain
-                    curve{end+1}=[r_s c_s];
-                    
+                % if it has neighbors
+                if hasNeighbors 
+                    % store only every other point
+                    if (mod(pointCount,storePointCount) == 0)
+                        %  Add the current pixel as the first in the chain
+                        curve{end+1}=[r_s c_s];
+                    end
+                    pointCount = pointCount +1;
                     %  If conected to more than one pixel, store info to avoid
                     %  loss of lines
                     if(length(frontier) > 1)
@@ -120,8 +131,9 @@ while ~isDone
                     pixel = can(r_m,c_m);
                 end
             end
-            %  add the curve that was just generated provided its not empty
-            if length(curve) > 5
+            %  add the curve that was just generated provided its longer
+            %  than the min length
+            if length(curve) > minLength
                 curveCount = curveCount + 1;
                 collection{curveCount,1} = curve;
                 
@@ -247,9 +259,9 @@ for prow = 1:length(collection)
         end
     end
     %Add an extra pose to lift up the marker
-%         ID = int2str(targCount) + "0";
-%         fprintf(fID, makeTargetCode(ID, LastX, LastY, ClearenceHeight));
-%         targCount = targCount + 1;
+    %         ID = int2str(targCount) + "0";
+    %         fprintf(fID, makeTargetCode(ID, LastX, LastY, ClearenceHeight));
+    %         targCount = targCount + 1;
 end
 
 % Print Main
@@ -272,15 +284,13 @@ for prow = 1:length(collection)
     tPath = collection{prow};
     fprintf(fID, "PROC Path_" + int2str(prow) + "0()\r\n");
     for pTarg = 1:length(tPath)
-        if mod(pTarg,ThinThresh) == 0
-            TargetID = int2str(pTargCount) + "0";
-            vel = "v200";
-            z = "z10";
-            tool = "custom_gripper_file";
-            workobj = "Workobject_1";
-            fprintf(fID, makeMoveL(TargetID, vel, z, tool, workobj));
-            pTargCount = pTargCount + 1;
-        end
+        TargetID = int2str(pTargCount) + "0";
+        vel = "v200";
+        z = "z10";
+        tool = "custom_gripper_file";
+        workobj = "Workobject_1";
+        fprintf(fID, makeMoveL(TargetID, vel, z, tool, workobj));
+        pTargCount = pTargCount + 1;
     end
     fprintf(fID, "ENDPROC\r\n");
     fprintf(fID, "\r\n");
