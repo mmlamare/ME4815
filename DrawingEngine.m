@@ -260,11 +260,12 @@ for prow = 1:length(collection)
         TargetID = int2str(pTargCount) + "0";
         vel = "v1000";
         z = "z10";
-        tool = "MyTool";
+        tool = "custom_gripper_file";
         workobj = "Workobject_1";
         fprintf(fID, makeMoveL(TargetID, vel, z, tool, workobj));
         pTargCount = pTargCount + 1;
     end
+    fprintf(fID, "ENDPROC\r\n");
     fprintf(fID, "\r\n");
 end
 
