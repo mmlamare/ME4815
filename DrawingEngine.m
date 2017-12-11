@@ -194,13 +194,15 @@ end
 %% Generate Rapid Code
 
 % Set a constant for the height to draw on
-HEIGHT = 2;
+% The board is 1/8 inch thick, 3.175 mm
+HEIGHT = 3.175;
+ClearenceHeight = 10;
 
 % Set a scale for pixels per inch
 % Needs to be mapped
-PPI = 20;
-xOffset = 20;
-yOffset = 1;
+PPI =    1035/22;
+xOffset = 26;
+yOffset = 7;
 
 % Create a File ID
 % 'a' character is used to ensure it appends
@@ -221,20 +223,33 @@ fprintf(fID, "\r\n");
 % move linear to that
 % when at last point in curve lift up linear
 targCount = 1;
+ThinCount = 1;
+ThinThresh = 10;
+
 for prow = 1:length(collection)
     tPath = collection{prow};
+    LastX = 0;
+    LastY = 0;
     for targ = 1:length(tPath)
-        Chords = tPath{targ};
-        xCoord = Chords(1);
-        yCoord = Chords(2);
-        % Map the coordinates
-        xCoord = pixelToPosition(xCoord, PPI, xOffset);
-        yCoord = pixelToPosition(yCoord, PPI, yOffset);
-        zCoord = HEIGHT;
-        ID = int2str(targCount) + "0";
-        fprintf(fID, makeTargetCode(ID, xCoord, yCoord, zCoord));
-        targCount = targCount + 1;
+        if mod(targ,ThinThresh) == 0
+            Chords = tPath{targ};
+            xCoord = Chords(1);
+            yCoord = Chords(2);
+            LastX = xCoord;
+            LastY = yCoord;
+            % Map the coordinates
+            xCoord = pixelToPosition(xCoord, PPI, xOffset);
+            yCoord = pixelToPosition(yCoord, PPI, yOffset);
+            zCoord = HEIGHT;
+            ID = int2str(targCount) + "0";
+            fprintf(fID, makeTargetCode(ID, xCoord, yCoord, zCoord));
+            targCount = targCount + 1;
+        end
     end
+    %Add an extra pose to lift up the marker
+%         ID = int2str(targCount) + "0";
+%         fprintf(fID, makeTargetCode(ID, LastX, LastY, ClearenceHeight));
+%         targCount = targCount + 1;
 end
 
 % Print Main
@@ -255,15 +270,17 @@ fprintf(fID, "\r\n");
 pTargCount = 1;
 for prow = 1:length(collection)
     tPath = collection{prow};
-    fprintf(fID, "PROC Path" + int2str(prow) + "0()\r\n");
+    fprintf(fID, "PROC Path_" + int2str(prow) + "0()\r\n");
     for pTarg = 1:length(tPath)
-        TargetID = int2str(pTargCount) + "0";
-        vel = "v1000";
-        z = "z10";
-        tool = "custom_gripper_file";
-        workobj = "Workobject_1";
-        fprintf(fID, makeMoveL(TargetID, vel, z, tool, workobj));
-        pTargCount = pTargCount + 1;
+        if mod(pTarg,ThinThresh) == 0
+            TargetID = int2str(pTargCount) + "0";
+            vel = "v200";
+            z = "z10";
+            tool = "custom_gripper_file";
+            workobj = "Workobject_1";
+            fprintf(fID, makeMoveL(TargetID, vel, z, tool, workobj));
+            pTargCount = pTargCount + 1;
+        end
     end
     fprintf(fID, "ENDPROC\r\n");
     fprintf(fID, "\r\n");
