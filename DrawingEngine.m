@@ -12,7 +12,7 @@ clear variables
 
 %  A personal photo of Moscow City from September 2016 is locally stored in
 %  the file directory. The image is loaded in as a test file. It is a jpg
-%  but its 2017 to hopefully that won't matter.
+%  but its 2017 to hopefully that won"t matter.
 I = imread('Photos/PTDC0073.jpg');
 
 %  The 12 Megapixel native size from the camera is just too big for MATLAB.
@@ -43,8 +43,8 @@ frontier = {};
 repeat = {};
 
 % set the values that determine which paths and points to keep
-minLength = 8;
-storePointCount = 2;
+minLength = 5;
+storePointCount = 7;
 
 %can = [0 0 0 0 0 0 0 0; 0 0 1 1 0 1 1 0; 0 0 0 0 1 0 1 0;1 1 1 1 0 0 1 1;1 0 1 0 1 0 1 1;1 1 0 0 0 1 0 1;1 0 1 1 0 1 1 1;0 0 1 1 0 0 0 0]
 [row,col] = size(can);
@@ -171,7 +171,7 @@ while ~isDone
     end
     if isEmpty
         isDone = true;
-        disp('Sketch Composition Complete')
+        disp("Sketch Composition Complete")
     end
 end
 % plot collection to see simulated sketch
@@ -199,7 +199,7 @@ if (size(collection,1) > 0) || (size(collection,2) > 0)
         plot(point(:,1),point(:,2));
     end
     hold off;
-    disp('Simulated Plot Complete');
+    disp("Simulated Plot Complete");
 end
 
 %% Generate Rapid Code
@@ -216,15 +216,15 @@ xOffset = 26;
 yOffset = 7;
 
 % Create a File ID
-% 'a' character is used to ensure it appends
-% 'w' ensure existing contents are discarded
-fID = fopen('RapidCommand.txt', 'a');
-fBeginID = fopen('RapidCommand.txt', 'w');
+% "a" character is used to ensure it appends
+% "w" ensure existing contents are discarded
+fID = fopen("RapidCommand.txt", 'a');
+fBeginID = fopen("RapidCommand.txt", 'w');
 
 % Begin text file generation with necessary meta data
 % Print Module
-fprintf(fBeginID, 'MODULE Module1\r\n');
-fprintf(fID, '\r\n');
+fprintf(fBeginID, "MODULE Module1\r\n");
+fprintf(fID, "\r\n");
 
 % Print Targets
 % For each curve,
@@ -246,8 +246,8 @@ for prow = 1:length(collection)
     % Map the coordinates
     xCoord = pixelToPosition(xCoord, PPI, xOffset);
     yCoord = pixelToPosition(yCoord, PPI, yOffset);
-    zCoord = HEIGHT + ClearenceHeight;
-    ID = int2str(targCount) + '0';
+    zCoord = ClearenceHeight;
+    ID = int2str(targCount) + "0";
     fprintf(fID, makeTargetCode(ID, xCoord, yCoord, zCoord));
     targCount = targCount + 1;
     % Make the targets for the rest of the path
@@ -259,7 +259,7 @@ for prow = 1:length(collection)
         xCoord = pixelToPosition(xCoord, PPI, xOffset);
         yCoord = pixelToPosition(yCoord, PPI, yOffset);
         zCoord = HEIGHT;
-        ID = int2str(targCount) + '0';
+        ID = int2str(targCount) + "0";
         fprintf(fID, makeTargetCode(ID, xCoord, yCoord, zCoord));
         targCount = targCount + 1;
     end
@@ -273,64 +273,64 @@ for prow = 1:length(collection)
     xCoord = pixelToPosition(xCoord, PPI, xOffset);
     yCoord = pixelToPosition(yCoord, PPI, yOffset);
     zCoord = HEIGHT + ClearenceHeight;
-    ID = int2str(targCount) + '0';
+    ID = int2str(targCount) + "0";
     fprintf(fID, makeTargetCode(ID, xCoord, yCoord, zCoord));
     targCount = targCount + 1;
 end
 
 % Print Main
-fprintf(fID, '\r\n');
-fprintf(fID, 'PROC main()\r\n');
+fprintf(fID, "\r\n");
+fprintf(fID, "PROC main()\r\n");
 % itterate through the list of paths
 for prow = 1:length(collection)
-    fprintf(fID, '    Path_' + int2str(prow) + '0;\r\n');
+    fprintf(fID, "    Path_" + int2str(prow) + "0;\r\n");
 end
-fprintf(fID, 'ENDPROC\r\n');
+fprintf(fID, "ENDPROC\r\n");
 
 % Print Paths
 % itterate through each path
 % within each path, itterate through each target
 % figure amount of local curve and map to z value
 % print moveL command
-fprintf(fID, '\r\n');
+fprintf(fID, "\r\n");
 pTargCount = 1;
 for prow = 1:length(collection)
     tPath = collection{prow};
-    fprintf(fID, 'PROC Path_' + int2str(prow) + '0()\r\n');
+    fprintf(fID, "PROC Path_" + int2str(prow) + "0()\r\n");
     % insert starting offset Point
-    TargetID = int2str(pTargCount) + '0';
-    vel = 'v200';
-    z = 'fine';
-    tool = 'custom_gripper_file';
-    workobj = 'Workobject_1';
+    TargetID = int2str(pTargCount) + "0";
+    vel = "v200";
+    z = "fine";
+    tool = "custom_gripper_file";
+    workobj = "Workobject_1";
     fprintf(fID, makeMoveL(TargetID, vel, z, tool, workobj));
     pTargCount = pTargCount + 1;
     % insert the path points
     for pTarg = 1:length(tPath)
-        TargetID = int2str(pTargCount) + '0';
-        vel = 'v200';
-        z = 'z1';
-        tool = 'custom_gripper_file';
-        workobj = 'Workobject_1';
+        TargetID = int2str(pTargCount) + "0";
+        vel = "v200";
+        z = "z1";
+        tool = "custom_gripper_file";
+        workobj = "Workobject_1";
         fprintf(fID, makeMoveL(TargetID, vel, z, tool, workobj));
         pTargCount = pTargCount + 1;
     end
     % insert ending offset Point
-    TargetID = int2str(pTargCount) + '0';
-    vel = 'v200';
-    z = 'fine';
-    tool = 'custom_gripper_file';
-    workobj = 'Workobject_1';
+    TargetID = int2str(pTargCount) + "0";
+    vel = "v200";
+    z = "fine";
+    tool = "custom_gripper_file";
+    workobj = "Workobject_1";
     fprintf(fID, makeMoveL(TargetID, vel, z, tool, workobj));
     pTargCount = pTargCount + 1;
-    fprintf(fID, 'ENDPROC\r\n');
-    fprintf(fID, '\r\n');
+    fprintf(fID, "ENDPROC\r\n");
+    fprintf(fID, "\r\n");
 end
 
 % Print ENDMODULE
-fprintf(fID, 'ENDMODULE\r\n');
+fprintf(fID, "ENDMODULE\r\n");
 
 % Close the file now that we are done
 fclose(fID);
 
-disp('RAPID Code Generation Complete');
+disp("RAPID Code Generation Complete");
