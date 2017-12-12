@@ -33,7 +33,6 @@ edge_method = 'Canny';
 %threshold = 0.05;
 can = edge(gray, edge_method);
 figure, imshow(can);
-
 %% Path Making Finding
 %  form a collection
 collection = {};
@@ -90,7 +89,7 @@ while ~isDone
                     end
                 end
                 % if it has neighbors
-                if hasNeighbors 
+                if hasNeighbors
                     % store only every other point
                     if (mod(pointCount,storePointCount) == 0)
                         %  Add the current pixel as the first in the chain
@@ -172,7 +171,7 @@ while ~isDone
     end
     if isEmpty
         isDone = true;
-        disp("Sketch Composition Complete")
+        disp('Sketch Composition Complete')
     end
 end
 % plot collection to see simulated sketch
@@ -200,7 +199,7 @@ if (size(collection,1) > 0) || (size(collection,2) > 0)
         plot(point(:,1),point(:,2));
     end
     hold off;
-    disp("Simulated Plot Complete");
+    disp('Simulated Plot Complete');
 end
 
 %% Generate Rapid Code
@@ -224,8 +223,8 @@ fBeginID = fopen('RapidCommand.txt', 'w');
 
 % Begin text file generation with necessary meta data
 % Print Module
-fprintf(fBeginID, "MODULE Module1\r\n");
-fprintf(fID, "\r\n");
+fprintf(fBeginID, 'MODULE Module1\r\n');
+fprintf(fID, '\r\n');
 
 % Print Targets
 % For each curve,
@@ -240,66 +239,98 @@ ThinThresh = 10;
 
 for prow = 1:length(collection)
     tPath = collection{prow};
-    LastX = 0;
-    LastY = 0;
+    % create the offset starting point
+    Chords = tPath{1};
+    xCoord = Chords(1);
+    yCoord = Chords(2);
+    % Map the coordinates
+    xCoord = pixelToPosition(xCoord, PPI, xOffset);
+    yCoord = pixelToPosition(yCoord, PPI, yOffset);
+    zCoord = HEIGHT + ClearenceHeight;
+    ID = int2str(targCount) + '0';
+    fprintf(fID, makeTargetCode(ID, xCoord, yCoord, zCoord));
+    targCount = targCount + 1;
+    % Make the targets for the rest of the path
     for targ = 1:length(tPath)
-        if mod(targ,ThinThresh) == 0
-            Chords = tPath{targ};
-            xCoord = Chords(1);
-            yCoord = Chords(2);
-            LastX = xCoord;
-            LastY = yCoord;
-            % Map the coordinates
-            xCoord = pixelToPosition(xCoord, PPI, xOffset);
-            yCoord = pixelToPosition(yCoord, PPI, yOffset);
-            zCoord = HEIGHT;
-            ID = int2str(targCount) + "0";
-            fprintf(fID, makeTargetCode(ID, xCoord, yCoord, zCoord));
-            targCount = targCount + 1;
-        end
+        Chords = tPath{targ};
+        xCoord = Chords(1);
+        yCoord = Chords(2);
+        % Map the coordinates
+        xCoord = pixelToPosition(xCoord, PPI, xOffset);
+        yCoord = pixelToPosition(yCoord, PPI, yOffset);
+        zCoord = HEIGHT;
+        ID = int2str(targCount) + '0';
+        fprintf(fID, makeTargetCode(ID, xCoord, yCoord, zCoord));
+        targCount = targCount + 1;
     end
-    %Add an extra pose to lift up the marker
-    %         ID = int2str(targCount) + "0";
-    %         fprintf(fID, makeTargetCode(ID, LastX, LastY, ClearenceHeight));
-    %         targCount = targCount + 1;
+    % create the offset ending point
+    Chords = tPath{end};
+    xCoord = Chords(1);
+    yCoord = Chords(2);
+    LastX = xCoord;
+    LastY = yCoord;
+    % Map the coordinates
+    xCoord = pixelToPosition(xCoord, PPI, xOffset);
+    yCoord = pixelToPosition(yCoord, PPI, yOffset);
+    zCoord = HEIGHT + ClearenceHeight;
+    ID = int2str(targCount) + '0';
+    fprintf(fID, makeTargetCode(ID, xCoord, yCoord, zCoord));
+    targCount = targCount + 1;
 end
 
 % Print Main
-fprintf(fID, "\r\n");
-fprintf(fID, "PROC main()\r\n");
+fprintf(fID, '\r\n');
+fprintf(fID, 'PROC main()\r\n');
 % itterate through the list of paths
 for prow = 1:length(collection)
-    fprintf(fID, "    Path_" + int2str(prow) + "0;\r\n");
+    fprintf(fID, '    Path_' + int2str(prow) + '0;\r\n');
 end
-fprintf(fID, "ENDPROC\r\n");
+fprintf(fID, 'ENDPROC\r\n');
 
 % Print Paths
 % itterate through each path
 % within each path, itterate through each target
 % figure amount of local curve and map to z value
 % print moveL command
-fprintf(fID, "\r\n");
+fprintf(fID, '\r\n');
 pTargCount = 1;
 for prow = 1:length(collection)
     tPath = collection{prow};
-    fprintf(fID, "PROC Path_" + int2str(prow) + "0()\r\n");
+    fprintf(fID, 'PROC Path_' + int2str(prow) + '0()\r\n');
+    % insert starting offset Point
+    TargetID = int2str(pTargCount) + '0';
+    vel = 'v200';
+    z = 'fine';
+    tool = 'custom_gripper_file';
+    workobj = 'Workobject_1';
+    fprintf(fID, makeMoveL(TargetID, vel, z, tool, workobj));
+    pTargCount = pTargCount + 1;
+    % insert the path points
     for pTarg = 1:length(tPath)
-        TargetID = int2str(pTargCount) + "0";
-        vel = "v200";
-        z = "z10";
-        tool = "custom_gripper_file";
-        workobj = "Workobject_1";
+        TargetID = int2str(pTargCount) + '0';
+        vel = 'v200';
+        z = 'z1';
+        tool = 'custom_gripper_file';
+        workobj = 'Workobject_1';
         fprintf(fID, makeMoveL(TargetID, vel, z, tool, workobj));
         pTargCount = pTargCount + 1;
     end
-    fprintf(fID, "ENDPROC\r\n");
-    fprintf(fID, "\r\n");
+    % insert ending offset Point
+    TargetID = int2str(pTargCount) + '0';
+    vel = 'v200';
+    z = 'fine';
+    tool = 'custom_gripper_file';
+    workobj = 'Workobject_1';
+    fprintf(fID, makeMoveL(TargetID, vel, z, tool, workobj));
+    pTargCount = pTargCount + 1;
+    fprintf(fID, 'ENDPROC\r\n');
+    fprintf(fID, '\r\n');
 end
 
 % Print ENDMODULE
-fprintf(fID, "ENDMODULE\r\n");
+fprintf(fID, 'ENDMODULE\r\n');
 
 % Close the file now that we are done
 fclose(fID);
 
-disp("RAPID Code Generation Complete");
+disp('RAPID Code Generation Complete');
