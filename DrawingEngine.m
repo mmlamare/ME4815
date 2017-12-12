@@ -204,10 +204,13 @@ end
 
 %% Generate Rapid Code
 
+% An offset needs to be made to account for the gipper on the EOAT
+MarkerHeight = 184.66;
+
 % Set a constant for the height to draw on
 % The board is 1/8 inch thick, 3.175 mm
-HEIGHT = 3.175;
-ClearenceHeight = 10;
+HEIGHT = 3.175 + MarkerHeight;
+ClearenceHeight = 10 + MarkerHeight;
 
 % Set a scale for pixels per inch
 % Needs to be mapped
