@@ -209,14 +209,14 @@ MarkerHeight = 184.66;
 
 % Set a constant for the height to draw on
 % The board is 1/8 inch thick, 3.175 mm
-HEIGHT = 3.175 + MarkerHeight;
+HEIGHT = 3.18 + MarkerHeight;
 ClearenceHeight = 10 + MarkerHeight;
 
 % Set a scale for pixels per inch
 % Needs to be mapped
 PPI =    1035/22;
-xOffset = 26;
-yOffset = 7;
+xOffset = 455.8;
+yOffset = -284.23;
 
 % Create a File ID
 % "a" character is used to ensure it appends
