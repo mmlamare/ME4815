@@ -26,7 +26,7 @@ I = imresize(I, 0.33);
 
 %  the image must be converted to greyscale
 gray = rgb2gray(I);
-%figure, imshow(gray);
+figure, imshow(gray);
 
 %  Run Canny Edge detection to find the outlines
 edge_method = 'Canny';
@@ -302,7 +302,7 @@ for prow = 1:length(collection)
     fprintf(fID, "PROC Path_" + int2str(prow) + "0()\r\n");
     % insert starting offset Point
     TargetID = int2str(pTargCount) + "0";
-    vel = "v200";
+    vel = "v50";
     z = "fine";
     tool = "tool0";
     workobj = "Workobject_1";
@@ -311,7 +311,7 @@ for prow = 1:length(collection)
     % insert the path points
     for pTarg = 1:length(tPath)
         TargetID = int2str(pTargCount) + "0";
-        vel = "v200";
+        vel = "v50";
         z = "z1";
         tool = "tool0";
         workobj = "Workobject_1";
@@ -320,7 +320,7 @@ for prow = 1:length(collection)
     end
     % insert ending offset Point
     TargetID = int2str(pTargCount) + "0";
-    vel = "v200";
+    vel = "v50";
     z = "fine";
     tool = "tool0";
     workobj = "Workobject_1";
