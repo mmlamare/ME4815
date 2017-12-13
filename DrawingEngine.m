@@ -43,8 +43,8 @@ frontier = {};
 repeat = {};
 
 % set the values that determine which paths and points to keep
-minLength = 5;
-storePointCount = 7;
+minLength = 6;
+storePointCount = 6;
 
 %can = [0 0 0 0 0 0 0 0; 0 0 1 1 0 1 1 0; 0 0 0 0 1 0 1 0;1 1 1 1 0 0 1 1;1 0 1 0 1 0 1 1;1 1 0 0 0 1 0 1;1 0 1 1 0 1 1 1;0 0 1 1 0 0 0 0]
 [row,col] = size(can);
@@ -205,7 +205,7 @@ end
 %% Generate Rapid Code
 
 % An offset needs to be made to account for the gipper on the EOAT
-MarkerHeight = 184.66;
+MarkerHeight = 190;
 
 % Set a constant for the height to draw on
 % The board is 1/8 inch thick, 3.175 mm
@@ -214,9 +214,9 @@ ClearenceHeight = 10 + MarkerHeight;
 
 % Set a scale for pixels per inch
 % Needs to be mapped
-PPI =    1035/22;
-xOffset = 455.8;
-yOffset = -284.23;
+PPI =    1035/533.4;
+xOffset = 5;
+yOffset = 5;
 
 % Create a File ID
 % "a" character is used to ensure it appends
@@ -275,7 +275,7 @@ for prow = 1:length(collection)
     % Map the coordinates
     xCoord = pixelToPosition(xCoord, PPI, xOffset);
     yCoord = pixelToPosition(yCoord, PPI, yOffset);
-    zCoord = HEIGHT + ClearenceHeight;
+    zCoord = ClearenceHeight;
     ID = int2str(targCount) + "0";
     fprintf(fID, makeTargetCode(ID, xCoord, yCoord, zCoord));
     targCount = targCount + 1;
@@ -304,7 +304,7 @@ for prow = 1:length(collection)
     TargetID = int2str(pTargCount) + "0";
     vel = "v200";
     z = "fine";
-    tool = "custom_gripper_file";
+    tool = "tool0";
     workobj = "Workobject_1";
     fprintf(fID, makeMoveL(TargetID, vel, z, tool, workobj));
     pTargCount = pTargCount + 1;
@@ -313,7 +313,7 @@ for prow = 1:length(collection)
         TargetID = int2str(pTargCount) + "0";
         vel = "v200";
         z = "z1";
-        tool = "custom_gripper_file";
+        tool = "tool0";
         workobj = "Workobject_1";
         fprintf(fID, makeMoveL(TargetID, vel, z, tool, workobj));
         pTargCount = pTargCount + 1;
@@ -322,7 +322,7 @@ for prow = 1:length(collection)
     TargetID = int2str(pTargCount) + "0";
     vel = "v200";
     z = "fine";
-    tool = "custom_gripper_file";
+    tool = "tool0";
     workobj = "Workobject_1";
     fprintf(fID, makeMoveL(TargetID, vel, z, tool, workobj));
     pTargCount = pTargCount + 1;
